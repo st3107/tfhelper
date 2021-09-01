@@ -43,7 +43,7 @@ class MySequence(Sequence):
             ds = xr.load_dataset(f)
             sx = ds["G"].values
             if self.normalize:
-                sx = np.divide(sx, np.linalg.norm(sx))
+                sx = np.divide(sx, (sx.max() - sx.min()))
             sy = int(ds["fraction"].values.max() >= self.threshold)
             x.append(sx)
             y.append(sy)
