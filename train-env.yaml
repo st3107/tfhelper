@@ -1,0 +1,11 @@
+name: test
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - tensorflow
+  - xarray
+  - numpy
+  - matplotlib
+  - jupyter
+  - jupyterlab
