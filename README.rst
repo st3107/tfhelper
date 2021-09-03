@@ -14,7 +14,17 @@ The collection of helper functions to train tensorflow models.
 * Free software: 3-clause BSD license
 * Documentation: (COMING SOON!) https://st3107.github.io/tfhelper.
 
-Features
---------
+Reference
+---------
 
-* TODO
+* Habanero
+
+https://confluence.columbia.edu/confluence/display/rcs/Habanero+-+Submitting+Jobs
+
+* Tensorflow
+
+https://www.tensorflow.org/guide
+
+* Set up jupyter on habenero
+
+https://github.com/taneugene/hpc_jupyter_setup
