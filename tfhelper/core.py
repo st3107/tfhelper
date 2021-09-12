@@ -15,10 +15,18 @@ EXAMPLE_DIR = resource_filename("tfhelper", "data/nc_files")
 
 class MySequence(Sequence):
 
-    def __init__(self, data_dir: str, batch_size: int, threshold: float = 0.95, normalize: bool = True):
+    def __init__(
+            self,
+            data_dir: str,
+            batch_size: int,
+            threshold: float = 0.95,
+            normalize: bool = True,
+            use_threshold: bool = True
+    ):
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.threshold = threshold
+        self.use_threshold = use_threshold
         self.normalize = normalize
         self.filenames = []
         self._glob_files()
@@ -45,7 +53,14 @@ class MySequence(Sequence):
             if self.normalize:
                 smin, smax = sx.min(), sx.max()
                 sx = np.divide(sx - smin, (smax - smin))
-            sy = int(ds["fraction"].values.max() >= self.threshold)
+            max_ = ds["fraction"].values.max()
+            if self.use_threshold:
+                if max_ >= self.threshold:
+                    sy = np.array([1., 0.])
+                else:
+                    sy = np.array([0., 1.])
+            else:
+                sy = np.array([max_, 1. - max_])
             x.append(sx)
             y.append(sy)
         return np.stack(x).astype("float32"), np.stack(y).astype("float32")
@@ -53,7 +68,7 @@ class MySequence(Sequence):
     def visualize(self, idx, **kwargs) -> None:
         x, y = self.__getitem__(idx)
         n = x.shape[0]
-        da = xr.DataArray(x)
+        da = xr.DataArray(x, dims=["sample", "x"])
         dim0 = da.dims[0]
         if n > 1:
             kwargs.setdefault("col", dim0)
