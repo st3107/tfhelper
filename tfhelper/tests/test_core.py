@@ -5,7 +5,10 @@ plt.ioff()
 
 
 def test_MySequence():
-    ms = core.MySequence(core.EXAMPLE_DIR, 4)
-    for i in range(3):
-        ms.visualize(i)
+    ms1, ms2 = core.create_seqs(core.EXAMPLE_DIR, 2)
+    for i in range(len(ms1)):
+        ms1.visualize(i)
+        plt.show()
+    for i in range(len(ms2)):
+        ms2.visualize(i)
         plt.show()

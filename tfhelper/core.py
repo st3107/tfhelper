@@ -17,29 +17,17 @@ class MySequence(Sequence):
 
     def __init__(
             self,
-            data_dir: str,
+            filenames: typing.List[str],
             batch_size: int,
             threshold: float = 0.95,
             normalize: bool = True,
             use_threshold: bool = True
     ):
-        self.data_dir = data_dir
         self.batch_size = batch_size
         self.threshold = threshold
         self.use_threshold = use_threshold
         self.normalize = normalize
-        self.filenames = []
-        self._glob_files()
-        self.shuffle()
-
-    def _glob_files(self) -> None:
-        _data_dir = Path(self.data_dir)
-        self.filenames = list(map(str, _data_dir.glob("[!.]*.nc")))
-        return
-
-    def shuffle(self) -> None:
-        np.random.shuffle(self.filenames)
-        return
+        self.filenames = filenames
 
     def __len__(self):
         return math.ceil(len(self.filenames) / self.batch_size)
@@ -86,3 +74,29 @@ class MySequence(Sequence):
             ax.set_title("{} = {}".format(da.dims[0], 0))
             ax.legend(["y = {}".format(y[0])])
         return
+
+
+def create_seqs(
+        data_dir: str,
+        batch_size: int,
+        fractions: typing.Sequence[float] = (0.8, 0.2),
+        pattern: str = r"[!.]*.nc",
+        **kwargs
+) -> typing.List[Sequence]:
+    # get all files
+    _data_dir = Path(data_dir)
+    filenames = list(map(str, _data_dir.glob(pattern)))
+    np.random.shuffle(filenames)
+    n = len(filenames)
+    # get slices
+    ss = [0]
+    ss.extend([round(f * n) for f in fractions])
+    m = len(ss)
+    for i in range(1, m):
+        ss[i] += ss[i-1]
+    # make sequences
+    mss = []
+    for i in range(1, m):
+        ms = MySequence(filenames[ss[i-1]:ss[i]], batch_size, **kwargs)
+        mss.append(ms)
+    return mss
