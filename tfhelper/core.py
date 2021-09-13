@@ -6,8 +6,10 @@ import matplotlib.pyplot as plt
 from pkg_resources import resource_filename
 
 import numpy as np
+import tqdm
 import xarray as xr
 from xarray.plot.facetgrid import FacetGrid
+import tensorflow as tf
 from tensorflow.keras.utils import Sequence
 
 EXAMPLE_DIR = resource_filename("tfhelper", "data/nc_files")
@@ -21,19 +23,21 @@ class MySequence(Sequence):
             batch_size: int,
             threshold: float = 0.95,
             normalize: bool = True,
-            use_threshold: bool = True
+            use_threshold: bool = True,
+            all_in_mem: bool = False
     ):
         self.batch_size = batch_size
         self.threshold = threshold
         self.use_threshold = use_threshold
         self.normalize = normalize
         self.filenames = filenames
+        self.all_in_mem = all_in_mem
+        self.x_data = None
+        self.y_data = None
+        if self.all_in_mem:
+            self.x_data, self.y_data = self.load_files(self.filenames)
 
-    def __len__(self):
-        return math.ceil(len(self.filenames) / self.batch_size)
-
-    def __getitem__(self, idx):
-        nc_files = self.filenames[slice(idx * self.batch_size, (idx + 1) * self.batch_size)]
+    def load_files(self, nc_files: typing.List[str]) -> typing.Tuple[tf.Tensor, tf.Tensor]:
         x, y = [], []
         for f in nc_files:
             ds = xr.load_dataset(f)
@@ -51,10 +55,22 @@ class MySequence(Sequence):
                 sy = np.array([max_, 1. - max_])
             x.append(sx)
             y.append(sy)
-        return np.stack(x).astype("float32"), np.stack(y).astype("float32")
+        _x, _y = np.stack(x), np.stack(y)
+        return tf.constant(_x, dtype=tf.float16), tf.constant(_y, dtype=tf.float16)
+
+    def __len__(self) -> int:
+        return math.ceil(len(self.filenames) / self.batch_size)
+
+    def __getitem__(self, idx: int) -> typing.Tuple[tf.Tensor, tf.Tensor]:
+        s = slice(idx * self.batch_size, (idx + 1) * self.batch_size)
+        if self.all_in_mem:
+            return self.x_data[s], self.y_data[s]
+        nc_files = self.filenames[s]
+        return self.load_files(nc_files)
 
     def visualize(self, idx, **kwargs) -> None:
         x, y = self.__getitem__(idx)
+        x, y = x.numpy(), y.numpy()
         n = x.shape[0]
         da = xr.DataArray(x, dims=["sample", "x"])
         dim0 = da.dims[0]

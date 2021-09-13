@@ -12,3 +12,13 @@ def test_MySequence():
     for i in range(len(ms2)):
         ms2.visualize(i)
         plt.show()
+
+
+def test_MySequence_all_in_memory():
+    ms1, ms2 = core.create_seqs(core.EXAMPLE_DIR, 2)
+    for i in range(len(ms1)):
+        ms1.visualize(i)
+        plt.show()
+    for i in range(len(ms2)):
+        ms2.visualize(i)
+        plt.show()
