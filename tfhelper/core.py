@@ -24,12 +24,14 @@ class MySequence(Sequence):
             threshold: float = 0.95,
             normalize: bool = True,
             use_threshold: bool = True,
-            all_in_mem: bool = False
+            all_in_mem: bool = False,
+            verbose: int = 0
     ):
         self.batch_size = batch_size
         self.threshold = threshold
         self.use_threshold = use_threshold
         self.normalize = normalize
+        self.verbose = verbose
         self.filenames = filenames
         self.all_in_mem = all_in_mem
         self.x_data = None
@@ -39,6 +41,8 @@ class MySequence(Sequence):
 
     def load_files(self, nc_files: typing.List[str]) -> typing.Tuple[tf.Tensor, tf.Tensor]:
         x, y = [], []
+        if self.verbose > 0:
+            nc_files = tqdm.tqdm(nc_files)
         for f in nc_files:
             ds = xr.load_dataset(f)
             sx = ds["G"].values
