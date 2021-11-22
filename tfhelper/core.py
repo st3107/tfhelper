@@ -120,3 +120,12 @@ def create_seqs(
         ms = MySequence(filenames[ss[i-1]:ss[i]], batch_size, **kwargs)
         mss.append(ms)
     return mss
+
+
+def concat_ncs(files: typing.Sequence[str]) -> xr.Dataset:
+    dss = []
+    for f in files:
+        ds = xr.load_dataset(f)
+        ds = ds[["G", "structure", "fraction"]]
+        dss.append(ds)
+    return xr.concat(dss, "mixture")
